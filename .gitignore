@@ -142,7 +142,7 @@ _TeamCity*
 .axoCover/*
 !.axoCover/settings.json
 
-# Coverlet is a free, cross platform Code Coverage Tool
+# Coverlet is a free, cross platform Code Coverage Tools
 coverage*.json
 coverage*.xml
 coverage*.info
