@@ -3,77 +3,61 @@
 
 <PageTitle>COTA Real-Time Analytics | Home</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
-    <div class="text-center mb-8">
-        <MudText Typo="Typo.h2" Style="font-weight: 700; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-            🏎️ COTA Real-Time Analytics
-        </MudText>
-        <MudText Typo="Typo.h5" Color="Color.Secondary" Class="mt-2">
-            Circuit of the Americas • Live Telemetry & Pit Strategy
-        </MudText>
+<div class="home-container">
+    <div class="hero-section">
+        <h1 class="hero-title">🏎️ COTA Real-Time Analytics</h1>
+        <p class="hero-subtitle">Circuit of the Americas • Live Telemetry & Pit Strategy</p>
     </div>
 
     @if (!isSimulationActive)
     {
-        <MudGrid>
-            <MudItem xs="12" md="8">
+        <div class="content-grid">
+            <div class="main-content">
                 <FileUploader OnDataLoaded="@HandleDataLoaded" OnSimulationRequested="@StartSimulation"/>
-            </MudItem>
+            </div>
 
-            <MudItem xs="12" md="4">
-                <MudPaper Class="glass-card pa-4">
-                    <MudText Typo="Typo.h6" Class="mb-3">📊 Features</MudText>
-                    <MudList T="string" Dense>
-                        <MudListItem T="string" Icon="@Icons.Material.Filled.Upload">
-                            <MudText Typo="Typo.body2">Upload 2GB+ telemetry files</MudText>
-                        </MudListItem>
-                        <MudListItem T="string" Icon="@Icons.Material.Filled.Speed">
-                            <MudText Typo="Typo.body2">Real-time simulation (1x-20x)</MudText>
-                        </MudListItem>
-                        <MudListItem T="string" Icon="@Icons.Material.Filled.Map">
-                            <MudText Typo="Typo.body2">Interactive track visualization</MudText>
-                        </MudListItem>
-                        <MudListItem T="string" Icon="@Icons.Material.Filled.Analytics">
-                            <MudText Typo="Typo.body2">Live sector time analysis</MudText>
-                        </MudListItem>
-                        <MudListItem T="string" Icon="@Icons.Material.Filled.LocalGasStation">
-                            <MudText Typo="Typo.body2">AI-powered pit strategy</MudText>
-                        </MudListItem>
-                        <MudListItem T="string" Icon="@Icons.Material.Filled.ShowChart">
-                            <MudText Typo="Typo.body2">Live telemetry charts</MudText>
-                        </MudListItem>
-                    </MudList>
+            <div class="sidebar-content">
+                <div class="info-card">
+                    <h3>📊 Features</h3>
+                    <ul class="feature-list">
+                        <li>📤 Upload 2GB+ telemetry files</li>
+                        <li>⚡ Real-time simulation (1x-20x)</li>
+                        <li>🗺️ Interactive track visualization</li>
+                        <li>📈 Live sector time analysis</li>
+                        <li>⛽ AI-powered pit strategy</li>
+                        <li>📊 Live telemetry charts</li>
+                    </ul>
+                </div>
 
-                    <MudDivider Class="my-4"/>
+                <div class="info-card">
+                    <h3>🏁 Track Info</h3>
+                    <div class="track-stats">
+                        <p><strong>Length:</strong> @CotaTrackConfig.CircuitLengthMeters m</p>
+                        <p><strong>Turns:</strong> @CotaTrackConfig.NumberOfTurns</p>
+                        <p><strong>Sectors:</strong> 3</p>
+                        <p><strong>Pit Lane:</strong> 36s @ 50 kph</p>
+                    </div>
+                </div>
 
-                    <MudText Typo="Typo.h6" Class="mb-3">🏁 Track Info</MudText>
-                    <MudText Typo="Typo.body2">
-                        <strong>Length:</strong> @CotaTrackConfig.CircuitLengthMeters m<br/>
-                        <strong>Turns:</strong> @CotaTrackConfig.NumberOfTurns<br/>
-                        <strong>Sectors:</strong> 3<br/>
-                        <strong>Pit Lane:</strong> 36s @@ 50 kph
-                    </MudText>
-                </MudPaper>
-
-                <MudPaper Class="glass-card pa-4 mt-4">
-                    <MudText Typo="Typo.h6" Class="mb-3">💡 Quick Start</MudText>
-                    <MudText Typo="Typo.body2">
-                        1️⃣ Upload telemetry CSV or Excel<br/>
-                        2️⃣ Click "Start Simulation"<br/>
-                        3️⃣ Watch live analytics<br/>
-                        4️⃣ Receive pit strategy alerts
-                    </MudText>
-                </MudPaper>
-            </MudItem>
-        </MudGrid>
+                <div class="info-card">
+                    <h3>💡 Quick Start</h3>
+                    <ol class="steps-list">
+                        <li>Upload telemetry CSV or Excel</li>
+                        <li>Click "Start Simulation"</li>
+                        <li>Watch live analytics</li>
+                        <li>Receive pit strategy alerts</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
     }
     else
     {
-        <MudButton Href="/dashboard" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" FullWidth Class="mt-4">
-            Go to Dashboard
-        </MudButton>
+        <div class="redirect-section">
+            <a href="/dashboard" class="btn btn-primary btn-large">Go to Dashboard</a>
+        </div>
     }
-</MudContainer>
+</div>
 
 @code {
     [Inject] private NavigationManager Navigation { get; set; } = default!;
@@ -91,3 +75,141 @@
         Navigation.NavigateTo("/dashboard");
     }
 }
+
+<style>
+    .home-container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .hero-section {
+        text-align: center;
+        padding: 3rem 1rem;
+        margin-bottom: 3rem;
+    }
+
+    .hero-title {
+        font-size: 3rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #00ff88, #00d4ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 1rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1.25rem;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .content-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .main-content {
+        min-width: 0;
+    }
+
+    .sidebar-content {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .info-card {
+        background: rgba(30, 30, 50, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 1.5rem;
+    }
+
+    .info-card h3 {
+        color: #00ff88;
+        margin-bottom: 1rem;
+        font-size: 1.125rem;
+    }
+
+    .feature-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .feature-list li {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.9375rem;
+    }
+
+    .track-stats p {
+        margin: 0.5rem 0;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .track-stats strong {
+        color: #00ff88;
+    }
+
+    .steps-list {
+        padding-left: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .steps-list li {
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .redirect-section {
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 0.75rem 2rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #00ff88, #00d4ff);
+        color: #0a0e27;
+    }
+
+    .btn-large {
+        padding: 1rem 2.5rem;
+        font-size: 1.125rem;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 255, 136, 0.4);
+    }
+
+    @media (max-width: 1024px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1rem;
+        }
+    }
+</style>

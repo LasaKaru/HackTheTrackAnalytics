@@ -1,29 +1,98 @@
-<MudNavMenu>
-    <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">
-        Home
-    </MudNavLink>
-    <MudNavLink Href="/dashboard" Icon="@Icons.Material.Filled.Dashboard">
-        Dashboard
-    </MudNavLink>
-    <MudDivider Class="my-2"/>
-    <MudNavGroup Title="Analytics" Icon="@Icons.Material.Filled.Analytics" Expanded="false">
-        <MudNavLink Href="/telemetry" Icon="@Icons.Material.Filled.ShowChart">
-            Telemetry
-        </MudNavLink>
-        <MudNavLink Href="/sectors" Icon="@Icons.Material.Filled.Timer">
-            Sector Times
-        </MudNavLink>
-        <MudNavLink Href="/pit-strategy" Icon="@Icons.Material.Filled.LocalGasStation">
-            Pit Strategy
-        </MudNavLink>
-    </MudNavGroup>
-    <MudDivider Class="my-2"/>
-    <MudText Typo="Typo.caption" Class="px-4 pt-4" Color="Color.Secondary">
-        COTA Track Info
-    </MudText>
-    <MudText Typo="Typo.caption" Class="px-4" Color="Color.Secondary">
-        Length: 5.498 km<br/>
-        Turns: 20<br/>
-        Sectors: 3
-    </MudText>
-</MudNavMenu>
+@rendermode InteractiveServer
+
+<nav class="nav-menu">
+    <ul>
+        <li>
+            <NavLink href="" Match="NavLinkMatch.All">
+                <span class="icon">🏠</span>
+                <span>Home</span>
+            </NavLink>
+        </li>
+        <li>
+            <NavLink href="dashboard">
+                <span class="icon">📊</span>
+                <span>Dashboard</span>
+            </NavLink>
+        </li>
+        <li>
+            <NavLink href="simulation">
+                <span class="icon">🏁</span>
+                <span>Simulation</span>
+            </NavLink>
+        </li>
+    </ul>
+
+    <div class="track-info">
+        <h4>🏁 Track Info</h4>
+        <p><strong>Length:</strong> 5.498 km</p>
+        <p><strong>Turns:</strong> 20</p>
+        <p><strong>Sectors:</strong> 3</p>
+    </div>
+</nav>
+
+<style>
+    .nav-menu {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .nav-menu ul {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .nav-menu li {
+        margin: 0;
+    }
+
+    .nav-menu a {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        color: rgba(255, 255, 255, 0.7);
+        text-decoration: none;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        font-weight: 500;
+    }
+
+    .nav-menu a:hover {
+        background: rgba(0, 255, 136, 0.1);
+        color: #00ff88;
+        transform: translateX(5px);
+    }
+
+    .nav-menu a.active {
+        background: linear-gradient(90deg, rgba(0, 255, 136, 0.2), rgba(0, 212, 255, 0.2));
+        color: #00ff88;
+        border-left: 3px solid #00ff88;
+    }
+
+    .icon {
+        font-size: 1.25rem;
+    }
+
+    .track-info {
+        margin-top: auto;
+        padding: 1rem;
+        background: rgba(0, 255, 136, 0.05);
+        border-radius: 8px;
+        border: 1px solid rgba(0, 255, 136, 0.2);
+    }
+
+    .track-info h4 {
+        margin-bottom: 0.75rem;
+        color: #00ff88;
+        font-size: 0.875rem;
+    }
+
+    .track-info p {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.7);
+        margin: 0.25rem 0;
+    }
+</style>
