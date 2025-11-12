@@ -1,0 +1,192 @@
+@* Live Leaderboard Component - Top 5 Drivers *@
+
+<MudPaper Class="glass-card pa-4" Elevation="10">
+    <div class="d-flex justify-space-between align-center mb-3">
+        <MudText Typo="Typo.h6" Style="color: var(--primary-color);">
+            <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" /> Live Leaderboard
+        </MudText>
+        <MudChip Size="Size.Small" Color="Color.Success">LIVE</MudChip>
+    </div>
+
+    @if (drivers.Any())
+    {
+        <MudTable Items="@drivers" Dense Hover Elevation="0" Class="leaderboard-table">
+            <HeaderContent>
+                <MudTh Style="text-align: center;">Pos</MudTh>
+                <MudTh>Driver</MudTh>
+                <MudTh Style="text-align: right;">Last Lap</MudTh>
+                <MudTh Style="text-align: right;">Gap</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Position" Style="text-align: center;">
+                    <MudChip Size="Size.Small" Color="@GetPositionColor(context.Position)" Class="position-chip">
+                        @context.Position
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Driver">
+                    <div class="d-flex align-center">
+                        <div class="driver-indicator" style="background: @context.Color;"></div>
+                        <MudText Typo="Typo.body2" Style="font-weight: 500;">@context.Name</MudText>
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="Last Lap" Style="text-align: right;">
+                    <MudText Typo="Typo.body2" Style="font-family: monospace;">
+                        @FormatLapTime(context.LastLap)
+                    </MudText>
+                </MudTd>
+                <MudTd DataLabel="Gap" Style="text-align: right;">
+                    <MudText Typo="Typo.body2" Style="color: @(context.Gap > 0 ? "#ff3366" : "#00ff88");">
+                        @FormatGap(context.Gap)
+                    </MudText>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+    else
+    {
+        <div class="text-center pa-4">
+            <MudProgressCircular Color="Color.Primary" Indeterminate />
+            <MudText Typo="Typo.body2" Class="mt-2" Color="Color.Secondary">
+                Waiting for race data...
+            </MudText>
+        </div>
+    }
+
+    @if (fastestLap != null)
+    {
+        <MudDivider Class="my-3" />
+        <div class="d-flex justify-space-between align-center">
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                <MudIcon Icon="@Icons.Material.Filled.Speed" Size="Size.Small" /> Fastest Lap
+            </MudText>
+            <MudText Typo="Typo.caption" Style="font-family: monospace; color: var(--primary-color);">
+                @fastestLap.DriverName - @FormatLapTime(fastestLap.LapTime)
+            </MudText>
+        </div>
+    }
+</MudPaper>
+
+@code {
+    [Parameter] public List<DriverStanding> Drivers { get; set; } = new();
+    [Parameter] public EventCallback<DriverStanding> OnDriverSelected { get; set; }
+
+    private List<DriverStanding> drivers = new();
+    private FastestLapInfo? fastestLap;
+
+    public class DriverStanding
+    {
+        public int Position { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string VehicleId { get; set; } = string.Empty;
+        public TimeSpan LastLap { get; set; }
+        public TimeSpan Gap { get; set; }
+        public int CurrentLap { get; set; }
+        public string Color { get; set; } = "#00ff88";
+        public bool IsOnTrack { get; set; } = true;
+    }
+
+    public class FastestLapInfo
+    {
+        public string DriverName { get; set; } = string.Empty;
+        public TimeSpan LapTime { get; set; }
+        public int LapNumber { get; set; }
+    }
+
+    protected override void OnParametersSet()
+    {
+        drivers = Drivers.OrderBy(d => d.Position).Take(5).ToList();
+
+        // Update fastest lap
+        if (drivers.Any())
+        {
+            var fastest = drivers.MinBy(d => d.LastLap);
+            if (fastest != null)
+            {
+                fastestLap = new FastestLapInfo
+                {
+                    DriverName = fastest.Name,
+                    LapTime = fastest.LastLap,
+                    LapNumber = fastest.CurrentLap
+                };
+            }
+        }
+    }
+
+    private Color GetPositionColor(int position)
+    {
+        return position switch
+        {
+            1 => Color.Warning,    // Gold
+            2 => Color.Default,    // Silver
+            3 => Color.Default,    // Bronze
+            _ => Color.Primary
+        };
+    }
+
+    private string FormatLapTime(TimeSpan lapTime)
+    {
+        if (lapTime == TimeSpan.Zero)
+            return "--:--.---";
+
+        return $"{lapTime.Minutes}:{lapTime.Seconds:D2}.{lapTime.Milliseconds:D3}";
+    }
+
+    private string FormatGap(TimeSpan gap)
+    {
+        if (gap == TimeSpan.Zero)
+            return "Leader";
+
+        if (gap.TotalSeconds < 1)
+            return $"+{gap.TotalMilliseconds:F0}ms";
+
+        return $"+{gap.TotalSeconds:F3}s";
+    }
+
+    /// <summary>
+    /// Update leaderboard via SignalR
+    /// </summary>
+    public async Task UpdateLeaderboardAsync(List<DriverStanding> updatedDrivers)
+    {
+        Drivers = updatedDrivers;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>
+    /// Add or update a driver
+    /// </summary>
+    public async Task UpdateDriverAsync(DriverStanding driver)
+    {
+        var existing = Drivers.FirstOrDefault(d => d.VehicleId == driver.VehicleId);
+        if (existing != null)
+        {
+            Drivers.Remove(existing);
+        }
+
+        Drivers.Add(driver);
+        await InvokeAsync(StateHasChanged);
+    }
+}
+
+<style>
+    .leaderboard-table {
+        background: transparent !important;
+    }
+
+    .leaderboard-table tbody tr:hover {
+        background: rgba(0, 255, 136, 0.05) !important;
+        transform: translateX(3px);
+        transition: all 0.2s ease;
+    }
+
+    .position-chip {
+        font-weight: 700;
+        min-width: 36px;
+    }
+
+    .driver-indicator {
+        width: 4px;
+        height: 20px;
+        border-radius: 2px;
+        margin-right: 8px;
+    }
+</style>

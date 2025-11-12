@@ -1,0 +1,386 @@
+/*
+ * COTA Real-Time Analytics Dashboard - Modern Dark Theme with Glassmorphism
+ * Racing-inspired design with neon accents and smooth animations
+ */
+
+:root {
+    --primary-color: #00ff88;
+    --primary-glow: rgba(0, 255, 136, 0.5);
+    --secondary-color: #00d4ff;
+    --accent-color: #ff0066;
+    --background-dark: #0a0e27;
+    --background-card: rgba(20, 25, 50, 0.7);
+    --text-primary: #ffffff;
+    --text-secondary: #b0b8c8;
+    --border-color: rgba(255, 255, 255, 0.1);
+    --success-color: #00ff88;
+    --warning-color: #ffd700;
+    --danger-color: #ff3366;
+    --blur-amount: 12px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+    background-attachment: fixed;
+    color: var(--text-primary);
+    overflow-x: hidden;
+}
+
+/* Glassmorphism Card Effect */
+.glass-card {
+    background: var(--background-card);
+    backdrop-filter: blur(var(--blur-amount));
+    -webkit-backdrop-filter: blur(var(--blur-amount));
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+                0 0 20px rgba(0, 255, 136, 0.1);
+    transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4),
+                0 0 30px var(--primary-glow);
+    transform: translateY(-2px);
+}
+
+.glass-card-neon {
+    background: rgba(20, 25, 50, 0.8);
+    backdrop-filter: blur(16px);
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 0 20px var(--primary-glow),
+                inset 0 0 20px rgba(0, 255, 136, 0.1);
+}
+
+/* Track Container */
+.track-container {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    background: rgba(10, 15, 30, 0.9);
+    box-shadow: 0 0 30px rgba(0, 200, 255, 0.3),
+                inset 0 0 30px rgba(0, 0, 0, 0.5);
+    border: 2px solid var(--secondary-color);
+}
+
+.track-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Car Dot - Animated racing car indicator */
+.car-dot {
+    width: 16px;
+    height: 16px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 50%;
+    position: absolute;
+    box-shadow: 0 0 20px var(--primary-color),
+                0 0 40px var(--primary-glow);
+    transition: all 0.08s ease-out;
+    z-index: 10;
+    animation: pulse-glow 2s infinite;
+}
+
+.car-dot::after {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid var(--primary-color);
+    top: -4px;
+    left: -4px;
+    animation: ring-pulse 1.5s infinite;
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        box-shadow: 0 0 20px var(--primary-color), 0 0 40px var(--primary-glow);
+    }
+    50% {
+        box-shadow: 0 0 30px var(--primary-color), 0 0 60px var(--primary-glow);
+    }
+}
+
+@keyframes ring-pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+
+/* Pit Alert - Floating animated notification */
+.pit-alert {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    animation: slide-in-right 0.5s ease-out, pulse 2s infinite;
+}
+
+.pit-alert-critical {
+    border: 2px solid var(--danger-color);
+    box-shadow: 0 0 30px rgba(255, 51, 102, 0.6);
+    animation: slide-in-right 0.5s ease-out, pulse-urgent 1s infinite;
+}
+
+@keyframes slide-in-right {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.02);
+    }
+}
+
+@keyframes pulse-urgent {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 30px rgba(255, 51, 102, 0.6);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 50px rgba(255, 51, 102, 0.9);
+    }
+}
+
+/* Sector Color Indicators */
+.sector-green {
+    background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.3), transparent);
+    border-left: 4px solid var(--success-color);
+}
+
+.sector-yellow {
+    background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.3), transparent);
+    border-left: 4px solid var(--warning-color);
+}
+
+.sector-red {
+    background: linear-gradient(90deg, transparent, rgba(255, 51, 102, 0.3), transparent);
+    border-left: 4px solid var(--danger-color);
+}
+
+/* Speed Trap Flash */
+.speed-trap-flash {
+    animation: flash-yellow 0.5s ease-out;
+}
+
+@keyframes flash-yellow {
+    0%, 100% {
+        background: transparent;
+    }
+    50% {
+        background: rgba(255, 215, 0, 0.8);
+        box-shadow: 0 0 40px rgba(255, 215, 0, 0.9);
+    }
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Progress Ring - Tire Wear Indicator */
+.progress-ring {
+    transform: rotate(-90deg);
+}
+
+.progress-ring-circle {
+    stroke-dasharray: 283;
+    stroke-dashoffset: 283;
+    transition: stroke-dashoffset 0.5s ease;
+}
+
+/* Telemetry Chart Styles */
+.chart-container {
+    background: rgba(10, 15, 30, 0.6);
+    border-radius: 12px;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+}
+
+/* Button Styles */
+.btn-racing {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: var(--background-dark);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+}
+
+.btn-racing:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(0, 255, 136, 0.5);
+}
+
+.btn-racing:active {
+    transform: translateY(0);
+}
+
+/* Upload Zone */
+.upload-zone {
+    border: 2px dashed var(--border-color);
+    border-radius: 16px;
+    padding: 3rem;
+    text-align: center;
+    background: rgba(20, 25, 50, 0.3);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.upload-zone:hover,
+.upload-zone.drag-over {
+    border-color: var(--primary-color);
+    background: rgba(0, 255, 136, 0.1);
+    box-shadow: 0 0 30px var(--primary-glow);
+}
+
+/* Dashboard Grid */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    padding: 1.5rem;
+}
+
+/* Stat Card */
+.stat-card {
+    text-align: center;
+    padding: 1.5rem;
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 0.5rem;
+}
+
+/* Leaderboard Table */
+.leaderboard-row {
+    transition: all 0.2s ease;
+}
+
+.leaderboard-row:hover {
+    background: rgba(0, 255, 136, 0.05);
+    transform: translateX(5px);
+}
+
+.position-1 {
+    color: #ffd700;
+}
+
+.position-2 {
+    color: #c0c0c0;
+}
+
+.position-3 {
+    color: #cd7f32;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .glass-card {
+        padding: 1rem;
+    }
+
+    .pit-alert {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+    }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(20, 25, 50, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color);
+}
+
+/* MudBlazor Overrides for Dark Theme */
+.mud-paper {
+    background-color: var(--background-card) !important;
+    backdrop-filter: blur(var(--blur-amount));
+}
+
+.mud-appbar {
+    background: linear-gradient(90deg, rgba(10, 14, 39, 0.95), rgba(20, 25, 50, 0.95)) !important;
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.mud-drawer {
+    background: rgba(10, 14, 39, 0.98) !important;
+    backdrop-filter: blur(20px);
+    border-right: 1px solid var(--border-color);
+}

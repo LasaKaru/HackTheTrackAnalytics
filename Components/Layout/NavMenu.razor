@@ -1,30 +1,29 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">HackTheTrackAnalytics</a>
-    </div>
-</div>
-
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
-
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-    </nav>
-</div>
-
+<MudNavMenu>
+    <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">
+        Home
+    </MudNavLink>
+    <MudNavLink Href="/dashboard" Icon="@Icons.Material.Filled.Dashboard">
+        Dashboard
+    </MudNavLink>
+    <MudDivider Class="my-2"/>
+    <MudNavGroup Title="Analytics" Icon="@Icons.Material.Filled.Analytics" Expanded="false">
+        <MudNavLink Href="/telemetry" Icon="@Icons.Material.Filled.ShowChart">
+            Telemetry
+        </MudNavLink>
+        <MudNavLink Href="/sectors" Icon="@Icons.Material.Filled.Timer">
+            Sector Times
+        </MudNavLink>
+        <MudNavLink Href="/pit-strategy" Icon="@Icons.Material.Filled.LocalGasStation">
+            Pit Strategy
+        </MudNavLink>
+    </MudNavGroup>
+    <MudDivider Class="my-2"/>
+    <MudText Typo="Typo.caption" Class="px-4 pt-4" Color="Color.Secondary">
+        COTA Track Info
+    </MudText>
+    <MudText Typo="Typo.caption" Class="px-4" Color="Color.Secondary">
+        Length: 5.498 km<br/>
+        Turns: 20<br/>
+        Sectors: 3
+    </MudText>
+</MudNavMenu>

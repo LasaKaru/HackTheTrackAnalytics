@@ -1,0 +1,201 @@
+@* File Upload Component with Drag & Drop Support *@
+
+<div class="upload-section">
+    <MudPaper Class="glass-card pa-6">
+        <MudText Typo="Typo.h5" Class="mb-4">📁 Upload Race Data</MudText>
+
+        <MudDropZone T="string" Class="upload-zone" OnDrop="@HandleFileDrop">
+            <div style="text-align: center; padding: 2rem;">
+                <MudIcon Icon="@Icons.Material.Filled.CloudUpload" Size="Size.Large" Color="Color.Primary" Style="font-size: 4rem;"/>
+                <MudText Typo="Typo.h6" Class="mt-4">Drag & Drop Files Here</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">or click to browse</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+                    Supported: CSV (telemetry, laps), Excel (.xlsx), PDF (track maps)
+                </MudText>
+            </div>
+        </MudDropZone>
+
+        <InputFile id="fileInput" OnChange="@HandleFileUpload" multiple style="display:none;"/>
+        <MudButton OnClick="@TriggerFileInput" FullWidth Class="mt-4 btn-racing" Variant="Variant.Filled">
+            Select Files
+        </MudButton>
+
+        @if (uploadedFiles.Any())
+        {
+            <MudText Typo="Typo.h6" Class="mt-6 mb-3">Uploaded Files</MudText>
+            <MudList Dense>
+                @foreach (var file in uploadedFiles)
+                {
+                    <MudListItem Icon="@GetFileIcon(file.Name)">
+                        <div class="d-flex justify-space-between align-center">
+                            <div>
+                                <MudText>@file.Name</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    @FormatFileSize(file.Size) • @file.Type
+                                </MudText>
+                            </div>
+                            @if (file.IsProcessing)
+                            {
+                                <MudProgressCircular Size="Size.Small" Indeterminate Color="Color.Primary"/>
+                            }
+                            else if (file.IsProcessed)
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success"/>
+                            }
+                        </div>
+                    </MudListItem>
+                }
+            </MudList>
+
+            @if (telemetryData.Any())
+            {
+                <MudAlert Severity="Severity.Success" Class="mt-4">
+                    Loaded @telemetryData.Count telemetry records from @uploadedFiles.Count file(s)
+                </MudAlert>
+
+                <MudButton OnClick="@StartSimulation" FullWidth Class="mt-4 btn-racing" Variant="Variant.Filled" Size="Size.Large">
+                    🏁 Start Real-Time Simulation
+                </MudButton>
+            }
+        }
+    </MudPaper>
+</div>
+
+@code {
+    [Parameter] public EventCallback<List<TelemetryRecord>> OnDataLoaded { get; set; }
+    [Parameter] public EventCallback OnSimulationRequested { get; set; }
+
+    [Inject] private DataProcessorService DataProcessor { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+
+    private List<UploadedFile> uploadedFiles = new();
+    private List<TelemetryRecord> telemetryData = new();
+
+    private class UploadedFile
+    {
+        public string Name { get; set; } = "";
+        public long Size { get; set; }
+        public string Type { get; set; } = "";
+        public bool IsProcessing { get; set; }
+        public bool IsProcessed { get; set; }
+    }
+
+    private async Task HandleFileUpload(InputFileChangeEventArgs e)
+    {
+        foreach (var file in e.GetMultipleFiles(10))
+        {
+            await ProcessFile(file);
+        }
+    }
+
+    private async Task ProcessFile(IBrowserFile file)
+    {
+        var uploadedFile = new UploadedFile
+        {
+            Name = file.Name,
+            Size = file.Size,
+            Type = GetFileType(file.Name),
+            IsProcessing = true
+        };
+
+        uploadedFiles.Add(uploadedFile);
+        StateHasChanged();
+
+        try
+        {
+            using var stream = file.OpenReadStream(maxAllowedSize: 3L * 1024 * 1024 * 1024); // 3GB max
+
+            if (file.Name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+            {
+                Snackbar.Add($"Processing {file.Name}... This may take a moment for large files.", Severity.Info);
+
+                var records = new List<TelemetryRecord>();
+                await foreach (var record in DataProcessor.StreamTelemetryCsvAsync(stream))
+                {
+                    records.Add(record);
+
+                    // Update UI every 5000 records
+                    if (records.Count % 5000 == 0)
+                    {
+                        await InvokeAsync(StateHasChanged);
+                    }
+                }
+
+                telemetryData.AddRange(records);
+                Snackbar.Add($"✓ Loaded {records.Count:N0} telemetry records from {file.Name}", Severity.Success);
+            }
+            else if (file.Name.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+            {
+                var records = await DataProcessor.ParseExcelTelemetryAsync(stream);
+                telemetryData.AddRange(records);
+                Snackbar.Add($"✓ Loaded {records.Count:N0} records from Excel", Severity.Success);
+            }
+
+            uploadedFile.IsProcessed = true;
+            await OnDataLoaded.InvokeAsync(telemetryData);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"❌ Error processing {file.Name}: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            uploadedFile.IsProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private Task HandleFileDrop(string item)
+    {
+        // Handled by InputFile component
+        return Task.CompletedTask;
+    }
+
+    private async Task TriggerFileInput()
+    {
+        await JS.InvokeVoidAsync("document.getElementById('fileInput').click()");
+    }
+
+    private async Task StartSimulation()
+    {
+        await OnSimulationRequested.InvokeAsync();
+    }
+
+    private string GetFileType(string fileName)
+    {
+        var ext = Path.GetExtension(fileName).ToLower();
+        return ext switch
+        {
+            ".csv" => "Telemetry CSV",
+            ".xlsx" => "Excel Data",
+            ".pdf" => "Track Map",
+            _ => "Unknown"
+        };
+    }
+
+    private string GetFileIcon(string fileName)
+    {
+        var ext = Path.GetExtension(fileName).ToLower();
+        return ext switch
+        {
+            ".csv" => Icons.Material.Filled.TableChart,
+            ".xlsx" => Icons.Material.Filled.TableView,
+            ".pdf" => Icons.Material.Filled.PictureAsPdf,
+            _ => Icons.Material.Filled.InsertDriveFile
+        };
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB" };
+        double len = bytes;
+        int order = 0;
+        while (len >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            len /= 1024;
+        }
+        return $"{len:0.##} {sizes[order]}";
+    }
+}

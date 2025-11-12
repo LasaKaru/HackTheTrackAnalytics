@@ -1,10 +1,38 @@
 using HackTheTrackAnalytics.Components;
+using HackTheTrackAnalytics.Services;
+using HackTheTrackAnalytics.Hubs;
+using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Add MudBlazor services
+builder.Services.AddMudServices();
+
+// Add SignalR
+builder.Services.AddSignalR(options =>
+{
+    options.MaximumReceiveMessageSize = 10 * 1024 * 1024; // 10MB for large telemetry updates
+    options.EnableDetailedErrors = true;
+});
+
+// Add application services
+builder.Services.AddSingleton<DataProcessorService>();
+builder.Services.AddSingleton<SimulationEngine>();
+builder.Services.AddSingleton<SectorTimeAnalyzer>();
+builder.Services.AddSingleton<PitStrategyEngine>();
+builder.Services.AddSingleton<TireDegradationModel>();
+builder.Services.AddSingleton<LapTriggerFixer>();
+builder.Services.AddSingleton<TrackPositionCalculator>();
+
+// Add SignalR Hub Service
+builder.Services.AddSingleton<IRaceHubService, RaceHubService>();
+
+// Add HTTP client for data downloads
+builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
@@ -23,5 +51,8 @@ app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+// Map SignalR hub
+app.MapHub<RaceHub>("/racehub");
 
 app.Run();
