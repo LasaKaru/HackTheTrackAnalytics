@@ -1,0 +1,73 @@
+@* Pit Strategy Alert Component *@
+
+@if (Recommendation != null && Recommendation.LapsUntilPit <= 5)
+{
+    var alertClass = Recommendation.Urgency switch
+    {
+        PitUrgency.Critical => "pit-alert-critical",
+        PitUrgency.Warning => "pit-alert",
+        _ => "pit-alert"
+    };
+
+    var color = Recommendation.Urgency switch
+    {
+        PitUrgency.Critical => Color.Error,
+        PitUrgency.Warning => Color.Warning,
+        PitUrgency.Advisory => Color.Info,
+        _ => Color.Default
+    };
+
+    <div class="@alertClass">
+        <MudPaper Class="glass-card-neon pa-4" Style="min-width: 320px; max-width: 400px;">
+            <div class="d-flex align-center mb-3">
+                <MudIcon Icon="@Icons.Material.Filled.LocalGasStation" Color="@color" Size="Size.Large" Class="mr-3"/>
+                <div>
+                    <MudText Typo="Typo.h6">Pit Strategy Alert</MudText>
+                    <MudChip Size="Size.Small" Color="@color">@Recommendation.Urgency.ToString().ToUpper()</MudChip>
+                </div>
+            </div>
+
+            <MudDivider Class="mb-3"/>
+
+            <MudText Typo="Typo.h5" Class="mb-2" Style="font-weight: 700;">
+                @Recommendation.GetDisplayMessage()
+            </MudText>
+
+            <MudProgressLinear Color="@color" Size="Size.Large" Value="@Recommendation.TireWearPercent" Class="mb-3">
+                <MudText Typo="Typo.body2">Tire Wear: @($"{Recommendation.TireWearPercent:F1}")%</MudText>
+            </MudProgressLinear>
+
+            <MudText Typo="Typo.body2" Class="mb-2">
+                <strong>Reason:</strong> @Recommendation.Reason
+            </MudText>
+
+            @if (Recommendation.IsCautionOpportunity)
+            {
+                <MudAlert Severity="Severity.Warning" Dense Class="mt-2">
+                    🟡 CAUTION FLAG - Pit now to gain time!
+                </MudAlert>
+            }
+
+            <MudDivider Class="my-3"/>
+
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                <strong>Factors:</strong><br/>
+                @foreach (var factor in Recommendation.Factors)
+                {
+                    <span>• @factor<br/></span>
+                }
+            </MudText>
+
+            @if (Recommendation.ExpectedTimeGain > TimeSpan.Zero)
+            {
+                <MudText Typo="Typo.caption" Class="mt-2" Style="color: var(--primary-color);">
+                    ⏱️ Expected time gain: @($"{Recommendation.ExpectedTimeGain.TotalSeconds:F1}s")
+                </MudText>
+            }
+        </MudPaper>
+    </div>
+}
+
+@code {
+    [Parameter] public PitRecommendation? Recommendation { get; set; }
+}

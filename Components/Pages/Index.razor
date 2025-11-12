@@ -1,0 +1,93 @@
+@page "/"
+@rendermode InteractiveServer
+
+<PageTitle>COTA Real-Time Analytics | Home</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
+    <div class="text-center mb-8">
+        <MudText Typo="Typo.h2" Style="font-weight: 700; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            🏎️ COTA Real-Time Analytics
+        </MudText>
+        <MudText Typo="Typo.h5" Color="Color.Secondary" Class="mt-2">
+            Circuit of the Americas • Live Telemetry & Pit Strategy
+        </MudText>
+    </div>
+
+    @if (!isSimulationActive)
+    {
+        <MudGrid>
+            <MudItem xs="12" md="8">
+                <FileUploader OnDataLoaded="@HandleDataLoaded" OnSimulationRequested="@StartSimulation"/>
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudPaper Class="glass-card pa-4">
+                    <MudText Typo="Typo.h6" Class="mb-3">📊 Features</MudText>
+                    <MudList Dense>
+                        <MudListItem Icon="@Icons.Material.Filled.Upload">
+                            <MudText Typo="Typo.body2">Upload 2GB+ telemetry files</MudText>
+                        </MudListItem>
+                        <MudListItem Icon="@Icons.Material.Filled.Speed">
+                            <MudText Typo="Typo.body2">Real-time simulation (1x-20x)</MudText>
+                        </MudListItem>
+                        <MudListItem Icon="@Icons.Material.Filled.Map">
+                            <MudText Typo="Typo.body2">Interactive track visualization</MudText>
+                        </MudListItem>
+                        <MudListItem Icon="@Icons.Material.Filled.Analytics">
+                            <MudText Typo="Typo.body2">Live sector time analysis</MudText>
+                        </MudListItem>
+                        <MudListItem Icon="@Icons.Material.Filled.LocalGasStation">
+                            <MudText Typo="Typo.body2">AI-powered pit strategy</MudText>
+                        </MudListItem>
+                        <MudListItem Icon="@Icons.Material.Filled.ShowChart">
+                            <MudText Typo="Typo.body2">Live telemetry charts</MudText>
+                        </MudListItem>
+                    </MudList>
+
+                    <MudDivider Class="my-4"/>
+
+                    <MudText Typo="Typo.h6" Class="mb-3">🏁 Track Info</MudText>
+                    <MudText Typo="Typo.body2">
+                        <strong>Length:</strong> @CotaTrackConfig.CircuitLengthMeters m<br/>
+                        <strong>Turns:</strong> @CotaTrackConfig.NumberOfTurns<br/>
+                        <strong>Sectors:</strong> 3<br/>
+                        <strong>Pit Lane:</strong> 36s @ 50 kph
+                    </MudText>
+                </MudPaper>
+
+                <MudPaper Class="glass-card pa-4 mt-4">
+                    <MudText Typo="Typo.h6" Class="mb-3">💡 Quick Start</MudText>
+                    <MudText Typo="Typo.body2">
+                        1️⃣ Upload telemetry CSV or Excel<br/>
+                        2️⃣ Click "Start Simulation"<br/>
+                        3️⃣ Watch live analytics<br/>
+                        4️⃣ Receive pit strategy alerts
+                    </MudText>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
+    else
+    {
+        <MudButton Href="/dashboard" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" FullWidth Class="mt-4">
+            Go to Dashboard
+        </MudButton>
+    }
+</MudContainer>
+
+@code {
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    private bool isSimulationActive = false;
+
+    private void HandleDataLoaded(List<TelemetryRecord> data)
+    {
+        // Data is loaded, ready for simulation
+    }
+
+    private void StartSimulation()
+    {
+        isSimulationActive = true;
+        Navigation.NavigateTo("/dashboard");
+    }
+}

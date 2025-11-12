@@ -361,3 +361,11 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Project-specific: Ignore large data files
+Data/
+*.csv
+*.xlsx
+*.xls
+*.pdf
+!wwwroot/**/*.pdf
