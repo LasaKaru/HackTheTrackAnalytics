@@ -1,0 +1,266 @@
+@* Sector Time Visualization with Color-Coded Performance Bars *@
+
+<MudPaper Class="glass-card pa-4" Elevation="10">
+    <MudText Typo="Typo.h6" Class="mb-4" Style="color: var(--primary-color);">
+        <MudIcon Icon="@Icons.Material.Filled.Timer" /> Sector Times
+    </MudText>
+
+    <MudGrid Spacing="3">
+        @foreach (var sector in sectors)
+        {
+            var statusClass = GetSectorStatusClass(sector.Status);
+            var statusColor = GetSectorStatusColor(sector.Status);
+            var icon = GetSectorStatusIcon(sector.Status);
+
+            <MudItem xs="12">
+                <div class="@($"sector-item {statusClass}")" style="position: relative; padding: 1rem; border-radius: 12px;">
+                    <div class="d-flex justify-space-between align-center mb-2">
+                        <div class="d-flex align-center">
+                            <MudIcon Icon="@icon" Color="@statusColor" Size="Size.Small" Class="mr-2"/>
+                            <MudText Typo="Typo.h6">Sector @sector.Number</MudText>
+                        </div>
+                        <MudChip Size="Size.Small" Color="@statusColor">
+                            @sector.Status
+                        </MudChip>
+                    </div>
+
+                    <div class="d-flex justify-space-between align-center mb-2">
+                        <MudText Typo="Typo.body1" Style="font-family: monospace; font-weight: 700;">
+                            @FormatTime(sector.CurrentTime)
+                        </MudText>
+                        <MudText Typo="Typo.body2" Style="color: @GetDeltaColor(sector.Delta);">
+                            @FormatDelta(sector.Delta)
+                        </MudText>
+                    </div>
+
+                    <!-- Progress bar showing time relative to best -->
+                    <MudProgressLinear
+                        Value="@GetProgressValue(sector)"
+                        Color="@statusColor"
+                        Size="Size.Large"
+                        Class="mb-2"
+                        Style="height: 8px; border-radius: 4px;">
+                    </MudProgressLinear>
+
+                    <div class="d-flex justify-space-between">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            Best: @FormatTime(sector.BestTime)
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            Distance: @($"{sector.Length:F0}m")
+                        </MudText>
+                    </div>
+                </div>
+            </MudItem>
+        }
+    </MudGrid>
+
+    @if (totalLapTime > TimeSpan.Zero)
+    {
+        <MudDivider Class="my-4"/>
+        <div class="d-flex justify-space-between align-center">
+            <MudText Typo="Typo.h6">Total Lap Time</MudText>
+            <div class="text-right">
+                <MudText Typo="Typo.h5" Style="font-family: monospace; color: var(--primary-color);">
+                    @FormatTime(totalLapTime)
+                </MudText>
+                <MudText Typo="Typo.body2" Style="color: @GetDeltaColor(totalDelta);">
+                    @FormatDelta(totalDelta)
+                </MudText>
+            </div>
+        </div>
+    }
+</MudPaper>
+
+@code {
+    [Parameter] public List<SectorTimeData> Sectors { get; set; } = new();
+
+    private List<SectorTimeData> sectors = new();
+    private TimeSpan totalLapTime = TimeSpan.Zero;
+    private TimeSpan totalDelta = TimeSpan.Zero;
+
+    public class SectorTimeData
+    {
+        public int Number { get; set; }
+        public TimeSpan CurrentTime { get; set; }
+        public TimeSpan BestTime { get; set; }
+        public TimeSpan Delta { get; set; }
+        public SectorStatus Status { get; set; }
+        public double Length { get; set; } // meters
+    }
+
+    public enum SectorStatus
+    {
+        Green,   // Faster than best
+        Yellow,  // Within tolerance
+        Red      // Slower than acceptable
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (Sectors.Any())
+        {
+            sectors = Sectors.ToList();
+
+            // Calculate totals
+            totalLapTime = TimeSpan.FromSeconds(sectors.Sum(s => s.CurrentTime.TotalSeconds));
+            totalDelta = TimeSpan.FromSeconds(sectors.Sum(s => s.Delta.TotalSeconds));
+        }
+        else
+        {
+            // Initialize with COTA sector data
+            sectors = new List<SectorTimeData>
+            {
+                new SectorTimeData
+                {
+                    Number = 1,
+                    CurrentTime = TimeSpan.Zero,
+                    BestTime = TimeSpan.FromSeconds(30.0),
+                    Delta = TimeSpan.Zero,
+                    Status = SectorStatus.Yellow,
+                    Length = CotaTrackConfig.SectorDistances.Sector1Length
+                },
+                new SectorTimeData
+                {
+                    Number = 2,
+                    CurrentTime = TimeSpan.Zero,
+                    BestTime = TimeSpan.FromSeconds(50.0),
+                    Delta = TimeSpan.Zero,
+                    Status = SectorStatus.Yellow,
+                    Length = CotaTrackConfig.SectorDistances.Sector2Length
+                },
+                new SectorTimeData
+                {
+                    Number = 3,
+                    CurrentTime = TimeSpan.Zero,
+                    BestTime = TimeSpan.FromSeconds(45.0),
+                    Delta = TimeSpan.Zero,
+                    Status = SectorStatus.Yellow,
+                    Length = CotaTrackConfig.SectorDistances.Sector3Length
+                }
+            };
+        }
+    }
+
+    private string GetSectorStatusClass(SectorStatus status)
+    {
+        return status switch
+        {
+            SectorStatus.Green => "sector-green",
+            SectorStatus.Yellow => "sector-yellow",
+            SectorStatus.Red => "sector-red",
+            _ => ""
+        };
+    }
+
+    private Color GetSectorStatusColor(SectorStatus status)
+    {
+        return status switch
+        {
+            SectorStatus.Green => Color.Success,
+            SectorStatus.Yellow => Color.Warning,
+            SectorStatus.Red => Color.Error,
+            _ => Color.Default
+        };
+    }
+
+    private string GetSectorStatusIcon(SectorStatus status)
+    {
+        return status switch
+        {
+            SectorStatus.Green => Icons.Material.Filled.ArrowDownward,
+            SectorStatus.Yellow => Icons.Material.Filled.Remove,
+            SectorStatus.Red => Icons.Material.Filled.ArrowUpward,
+            _ => Icons.Material.Filled.Remove
+        };
+    }
+
+    private double GetProgressValue(SectorTimeData sector)
+    {
+        if (sector.BestTime == TimeSpan.Zero || sector.CurrentTime == TimeSpan.Zero)
+            return 0;
+
+        // Calculate percentage relative to best (clamped to 100%)
+        var percentage = (sector.BestTime.TotalSeconds / sector.CurrentTime.TotalSeconds) * 100.0;
+        return Math.Min(100, Math.Max(0, percentage));
+    }
+
+    private string FormatTime(TimeSpan time)
+    {
+        if (time == TimeSpan.Zero)
+            return "--:--.---";
+
+        return $"{time.Minutes}:{time.Seconds:D2}.{time.Milliseconds:D3}";
+    }
+
+    private string FormatDelta(TimeSpan delta)
+    {
+        if (delta == TimeSpan.Zero)
+            return "0.000";
+
+        var sign = delta.TotalSeconds >= 0 ? "+" : "";
+        return $"{sign}{delta.TotalSeconds:F3}s";
+    }
+
+    private string GetDeltaColor(TimeSpan delta)
+    {
+        if (delta.TotalSeconds < 0)
+            return "var(--success-color)"; // Green - faster
+        if (delta.TotalSeconds < 1.0)
+            return "var(--warning-color)"; // Yellow - close
+        return "var(--danger-color)";      // Red - slower
+    }
+
+    /// <summary>
+    /// Update sector times via SignalR
+    /// </summary>
+    public async Task UpdateSectorAsync(int sectorNumber, TimeSpan currentTime, TimeSpan bestTime)
+    {
+        var sector = sectors.FirstOrDefault(s => s.Number == sectorNumber);
+        if (sector != null)
+        {
+            sector.CurrentTime = currentTime;
+            sector.BestTime = bestTime;
+            sector.Delta = currentTime - bestTime;
+
+            // Determine status
+            sector.Status = sector.Delta.TotalSeconds switch
+            {
+                < 0 => SectorStatus.Green,
+                < 1.0 => SectorStatus.Yellow,
+                _ => SectorStatus.Red
+            };
+
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    /// <summary>
+    /// Clear all sector times (on new lap)
+    /// </summary>
+    public async Task ResetSectorsAsync()
+    {
+        foreach (var sector in sectors)
+        {
+            sector.CurrentTime = TimeSpan.Zero;
+            sector.Delta = TimeSpan.Zero;
+            sector.Status = SectorStatus.Yellow;
+        }
+
+        totalLapTime = TimeSpan.Zero;
+        totalDelta = TimeSpan.Zero;
+
+        await InvokeAsync(StateHasChanged);
+    }
+}
+
+<style>
+    .sector-item {
+        transition: all 0.3s ease;
+    }
+
+    .sector-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+</style>

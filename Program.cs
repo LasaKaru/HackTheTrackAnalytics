@@ -24,6 +24,12 @@ builder.Services.AddSingleton<DataProcessorService>();
 builder.Services.AddSingleton<SimulationEngine>();
 builder.Services.AddSingleton<SectorTimeAnalyzer>();
 builder.Services.AddSingleton<PitStrategyEngine>();
+builder.Services.AddSingleton<TireDegradationModel>();
+builder.Services.AddSingleton<LapTriggerFixer>();
+builder.Services.AddSingleton<TrackPositionCalculator>();
+
+// Add SignalR Hub Service
+builder.Services.AddSingleton<IRaceHubService, RaceHubService>();
 
 // Add HTTP client for data downloads
 builder.Services.AddHttpClient();

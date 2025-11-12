@@ -1,0 +1,347 @@
+@page "/simulation"
+@rendermode InteractiveServer
+@implements IAsyncDisposable
+
+<PageTitle>Simulation | COTA Real-Time Analytics</PageTitle>
+
+<style>
+    .simulation-fullscreen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+        z-index: 1000;
+        overflow: hidden;
+    }
+
+    .simulation-controls {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1001;
+    }
+
+    .simulation-stats {
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        z-index: 1001;
+        max-width: 300px;
+    }
+</style>
+
+<div class="simulation-fullscreen">
+    <!-- Header -->
+    <MudAppBar Elevation="1" Dense Style="background: rgba(10, 14, 39, 0.95); backdrop-filter: blur(16px);">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Color="Color.Inherit" Href="/dashboard" Edge="Edge.Start"/>
+        <MudText Typo="Typo.h6" Style="font-weight: 700;">
+            🏁 Live Simulation
+        </MudText>
+        <MudSpacer/>
+        <MudChip Size="Size.Small" Color="@(isRunning ? Color.Success : Color.Warning)">
+            @(isRunning ? "LIVE" : "PAUSED")
+        </MudChip>
+    </MudAppBar>
+
+    <!-- Track Map (Full Screen) -->
+    <div style="position: absolute; top: 64px; left: 0; right: 0; bottom: 100px; display: flex; align-items: center; justify-content: center;">
+        <TrackMap TrackPosition="@currentTrackPosition"
+                  currentTelemetry="@currentTelemetry"
+                  sectorDeltas="@sectorDeltas"
+                  showSectorInfo="true"/>
+    </div>
+
+    <!-- Live Stats Panel -->
+    <div class="simulation-stats">
+        <MudPaper Class="glass-card pa-4">
+            <MudText Typo="Typo.h6" Class="mb-3">📊 Live Telemetry</MudText>
+
+            <MudGrid Spacing="2">
+                <MudItem xs="6">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">LAP</MudText>
+                    <MudText Typo="Typo.h5" Style="color: var(--primary-color);">@currentLap</MudText>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">SECTOR</MudText>
+                    <MudText Typo="Typo.h5" Style="color: var(--secondary-color);">@currentSector</MudText>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudDivider/>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">SPEED</MudText>
+                    <MudText Typo="Typo.h6">@($"{currentSpeed:F0}") km/h</MudText>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">GEAR</MudText>
+                    <MudText Typo="Typo.h6">@currentGear</MudText>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">THROTTLE</MudText>
+                    <MudProgressLinear Value="@currentThrottle" Color="Color.Success" Size="Size.Small"/>
+                    <MudText Typo="Typo.caption">@($"{currentThrottle:F0}")%</MudText>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">BRAKE</MudText>
+                    <MudProgressLinear Value="@(currentBrake * 10)" Color="Color.Error" Size="Size.Small"/>
+                    <MudText Typo="Typo.caption">@($"{currentBrake:F1}")</MudText>
+                </MudItem>
+            </MudGrid>
+
+            @if (pitRecommendation != null && pitRecommendation.LapsUntilPit <= 3)
+            {
+                <MudDivider Class="my-3"/>
+                <MudAlert Severity="@GetPitAlertSeverity()" Dense Variant="Variant.Filled">
+                    <strong>@pitRecommendation.GetDisplayMessage()</strong>
+                </MudAlert>
+            }
+        </MudPaper>
+
+        <!-- Sector Bar -->
+        <div class="mt-4">
+            <SectorBar Sectors="@GetSectorData()"/>
+        </div>
+    </div>
+
+    <!-- Control Panel -->
+    <div class="simulation-controls">
+        <MudPaper Class="glass-card-neon pa-4" Style="min-width: 600px;">
+            <MudGrid Spacing="2" Justify="Justify.Center">
+                <MudItem xs="12" Class="d-flex justify-center align-center">
+                    @if (!isRunning)
+                    {
+                        <MudIconButton Icon="@Icons.Material.Filled.PlayArrow"
+                                       Color="Color.Success"
+                                       Size="Size.Large"
+                                       OnClick="@PlaySimulation"
+                                       Variant="Variant.Filled"/>
+                    }
+                    else
+                    {
+                        <MudIconButton Icon="@Icons.Material.Filled.Pause"
+                                       Color="Color.Warning"
+                                       Size="Size.Large"
+                                       OnClick="@PauseSimulation"
+                                       Variant="Variant.Filled"/>
+                    }
+
+                    <MudIconButton Icon="@Icons.Material.Filled.Stop"
+                                   Color="Color.Error"
+                                   Size="Size.Large"
+                                   OnClick="@StopSimulation"
+                                   Class="ml-2"
+                                   Variant="Variant.Filled"/>
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudSlider @bind-Value="@speedMultiplier"
+                               Min="1"
+                               Max="20"
+                               Step="1"
+                               Color="Color.Primary"
+                               Variant="Variant.Filled">
+                        Speed: @($"{speedMultiplier:F0}")x
+                    </MudSlider>
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudProgressLinear Value="@progressPercent"
+                                       Color="Color.Primary"
+                                       Size="Size.Large"
+                                       Class="rounded">
+                        <MudText Typo="Typo.caption">@($"{progressPercent:F1}")% Complete</MudText>
+                    </MudProgressLinear>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+    </div>
+
+    <!-- Pit Alert (Floating) -->
+    <PitAlert Recommendation="@pitRecommendation"/>
+</div>
+
+@code {
+    [Inject] private SimulationEngine SimEngine { get; set; } = default!;
+    [Inject] private SectorTimeAnalyzer SectorAnalyzer { get; set; } = default!;
+    [Inject] private PitStrategyEngine PitEngine { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
+
+    private string? sessionId;
+    private bool isRunning = false;
+    private double speedMultiplier = 10.0;
+    private double progressPercent = 0;
+
+    // Current state
+    private TelemetryRecord? currentTelemetry;
+    private TrackPosition? currentTrackPosition;
+    private List<SectorDelta>? sectorDeltas;
+    private PitRecommendation? pitRecommendation;
+
+    private int currentLap = 0;
+    private int currentSector = 0;
+    private double currentSpeed = 0;
+    private double currentThrottle = 0;
+    private double currentBrake = 0;
+    private int currentGear = 0;
+    private double tireWear = 0;
+
+    private List<TelemetryRecord> sampleData = new();
+    private BestLapBenchmark? bestLap;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Generate sample data
+        GenerateSampleData();
+
+        // Subscribe to events
+        SimEngine.OnUpdate += HandleSimulationUpdate;
+        SimEngine.OnSectorCrossing += HandleSectorCrossing;
+
+        bestLap = new BestLapBenchmark
+        {
+            BestLapTime = TimeSpan.FromSeconds(125),
+            BestS1 = TimeSpan.FromSeconds(30),
+            BestS2 = TimeSpan.FromSeconds(50),
+            BestS3 = TimeSpan.FromSeconds(45)
+        };
+    }
+
+    private void GenerateSampleData()
+    {
+        var random = new Random();
+        var startTime = DateTime.UtcNow;
+
+        for (int lap = 1; lap <= 5; lap++)
+        {
+            for (double dist = 0; dist < CotaTrackConfig.CircuitLengthMeters; dist += 10)
+            {
+                sampleData.Add(new TelemetryRecord
+                {
+                    Timestamp = startTime.AddSeconds(sampleData.Count * 0.1),
+                    Lap = lap,
+                    LapDistance = dist,
+                    Speed = 150 + random.Next(-30, 50),
+                    Throttle = dist % 500 < 100 ? 20 + random.Next(0, 30) : 80 + random.Next(0, 20),
+                    BrakeFront = dist % 500 < 100 ? 80 + random.Next(0, 20) : 10,
+                    Gear = (int)((150 + random.Next(-30, 50)) / 30) + 1,
+                    CurrentSector = dist < 1308.8 ? 1 : dist < 3548.8 ? 2 : 3
+                });
+            }
+        }
+    }
+
+    private async Task PlaySimulation()
+    {
+        if (sampleData.Any())
+        {
+            if (sessionId == null)
+            {
+                sessionId = await SimEngine.StartSimulationAsync(sampleData, "Car1", speedMultiplier);
+            }
+            else
+            {
+                SimEngine.Resume(sessionId);
+            }
+
+            isRunning = true;
+            Snackbar.Add("▶️ Simulation started", Severity.Success);
+        }
+    }
+
+    private void PauseSimulation()
+    {
+        if (sessionId != null)
+        {
+            SimEngine.Pause(sessionId);
+            isRunning = false;
+            Snackbar.Add("⏸️ Simulation paused", Severity.Info);
+        }
+    }
+
+    private void StopSimulation()
+    {
+        if (sessionId != null)
+        {
+            SimEngine.Stop(sessionId);
+            sessionId = null;
+            isRunning = false;
+            progressPercent = 0;
+            Snackbar.Add("⏹️ Simulation stopped", Severity.Warning);
+        }
+    }
+
+    private void HandleSimulationUpdate(object? sender, SimulationUpdateEventArgs e)
+    {
+        currentTelemetry = e.Telemetry;
+        currentTrackPosition = e.TrackPosition;
+        progressPercent = e.ProgressPercent;
+
+        currentLap = e.Telemetry.Lap;
+        currentSector = e.TrackPosition.CurrentSector;
+        currentSpeed = e.Telemetry.Speed ?? 0;
+        currentThrottle = e.Telemetry.Throttle ?? 0;
+        currentBrake = e.Telemetry.BrakeFront ?? 0;
+        currentGear = e.Telemetry.Gear ?? 0;
+
+        sectorDeltas = SectorAnalyzer.UpdateTiming(e.Telemetry, bestLap);
+
+        if (e.CurrentIndex % 100 == 0 && bestLap != null)
+        {
+            pitRecommendation = PitEngine.GenerateRecommendation(
+                currentLap, new(), new() { e.Telemetry },
+                bestLap, null, false, 30
+            );
+        }
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleSectorCrossing(object? sender, SectorCrossingEventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private Severity GetPitAlertSeverity()
+    {
+        return pitRecommendation?.Urgency switch
+        {
+            PitUrgency.Critical => Severity.Error,
+            PitUrgency.Warning => Severity.Warning,
+            _ => Severity.Info
+        };
+    }
+
+    private List<SectorBar.SectorTimeData> GetSectorData()
+    {
+        if (sectorDeltas == null) return new();
+
+        return sectorDeltas.Select(d => new SectorBar.SectorTimeData
+        {
+            Number = d.Sector,
+            CurrentTime = d.CurrentTime,
+            BestTime = d.BestTime,
+            Delta = d.Delta,
+            Status = d.Status switch
+            {
+                SectorStatus.Green => SectorBar.SectorStatus.Green,
+                SectorStatus.Yellow => SectorBar.SectorStatus.Yellow,
+                _ => SectorBar.SectorStatus.Red
+            },
+            Length = d.Sector == 1 ? 1308.8 : d.Sector == 2 ? 2240.0 : 1949.5
+        }).ToList();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        SimEngine.OnUpdate -= HandleSimulationUpdate;
+        SimEngine.OnSectorCrossing -= HandleSectorCrossing;
+
+        if (sessionId != null)
+        {
+            SimEngine.Stop(sessionId);
+        }
+    }
+}

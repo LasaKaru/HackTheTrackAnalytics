@@ -148,4 +148,12 @@ public class RaceHub : Hub
             progressPercent
         });
     }
+
+    /// <summary>
+    /// Ping method for connection health check
+    /// </summary>
+    public async Task Ping()
+    {
+        await Clients.Caller.SendAsync("Pong", DateTime.UtcNow);
+    }
 }

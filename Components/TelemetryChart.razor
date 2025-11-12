@@ -1,0 +1,160 @@
+@* Live Telemetry Charts with ScottPlot *@
+
+<MudGrid Spacing="3">
+    <!-- Speed Chart -->
+    <MudItem xs="12" md="6">
+        <MudPaper Class="glass-card pa-3" Elevation="8">
+            <MudText Typo="Typo.h6" Class="mb-2" Style="color: var(--primary-color);">
+                <MudIcon Icon="@Icons.Material.Filled.Speed" Size="Size.Small"/> Speed (km/h)
+            </MudText>
+            <div id="speed-chart" style="height: 200px; background: rgba(10, 15, 30, 0.6); border-radius: 8px; padding: 10px;">
+                <canvas id="speed-canvas"></canvas>
+            </div>
+            <MudText Typo="Typo.body2" Class="mt-2" Align="Align.Center">
+                Current: <strong style="color: var(--primary-color);">@($"{currentSpeed:F1}") km/h</strong>
+            </MudText>
+        </MudPaper>
+    </MudItem>
+
+    <!-- Brake Pressure Chart -->
+    <MudItem xs="12" md="6">
+        <MudPaper Class="glass-card pa-3" Elevation="8">
+            <MudText Typo="Typo.h6" Class="mb-2" Style="color: #ff3366;">
+                <MudIcon Icon="@Icons.Material.Filled.Circle" Size="Size.Small"/> Brake Pressure
+            </MudText>
+            <div id="brake-chart" style="height: 200px; background: rgba(10, 15, 30, 0.6); border-radius: 8px; padding: 10px;">
+                <canvas id="brake-canvas"></canvas>
+            </div>
+            <MudText Typo="Typo.body2" Class="mt-2" Align="Align.Center">
+                Current: <strong style="color: #ff3366;">@($"{currentBrake:F1}")</strong> bar
+            </MudText>
+        </MudPaper>
+    </MudItem>
+
+    <!-- Throttle Chart -->
+    <MudItem xs="12" md="6">
+        <MudPaper Class="glass-card pa-3" Elevation="8">
+            <MudText Typo="Typo.h6" Class="mb-2" Style="color: #00d4ff;">
+                <MudIcon Icon="@Icons.Material.Filled.LocalGasStation" Size="Size.Small"/> Throttle (%)
+            </MudText>
+            <div id="throttle-chart" style="height: 200px; background: rgba(10, 15, 30, 0.6); border-radius: 8px; padding: 10px;">
+                <canvas id="throttle-canvas"></canvas>
+            </div>
+            <MudText Typo="Typo.body2" Class="mt-2" Align="Align.Center">
+                Current: <strong style="color: #00d4ff;">@($"{currentThrottle:F1}")%</strong>
+            </MudText>
+        </MudPaper>
+    </MudItem>
+
+    <!-- Lap Time Trend -->
+    <MudItem xs="12" md="6">
+        <MudPaper Class="glass-card pa-3" Elevation="8">
+            <MudText Typo="Typo.h6" Class="mb-2" Style="color: #ffd700;">
+                <MudIcon Icon="@Icons.Material.Filled.Timeline" Size="Size.Small"/> Lap Time Trend
+            </MudText>
+            <div id="laptime-chart" style="height: 200px; background: rgba(10, 15, 30, 0.6); border-radius: 8px; padding: 10px;">
+                <canvas id="laptime-canvas"></canvas>
+            </div>
+            <MudText Typo="Typo.body2" Class="mt-2" Align="Align.Center">
+                Average: <strong style="color: #ffd700;">@($"{averageLapTime:F2}")s</strong>
+            </MudText>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+
+    [Parameter] public double CurrentSpeed { get; set; }
+    [Parameter] public double CurrentBrake { get; set; }
+    [Parameter] public double CurrentThrottle { get; set; }
+    [Parameter] public List<double> LapTimes { get; set; } = new();
+
+    private double currentSpeed = 0;
+    private double currentBrake = 0;
+    private double currentThrottle = 0;
+    private double averageLapTime = 0;
+
+    private List<double> speedHistory = new();
+    private List<double> brakeHistory = new();
+    private List<double> throttleHistory = new();
+
+    private const int MaxDataPoints = 200;
+
+    protected override void OnParametersSet()
+    {
+        currentSpeed = CurrentSpeed;
+        currentBrake = CurrentBrake;
+        currentThrottle = CurrentThrottle;
+
+        // Update history
+        UpdateHistory(speedHistory, currentSpeed);
+        UpdateHistory(brakeHistory, currentBrake);
+        UpdateHistory(throttleHistory, currentThrottle);
+
+        if (LapTimes.Any())
+        {
+            averageLapTime = LapTimes.Average();
+        }
+    }
+
+    private void UpdateHistory(List<double> history, double value)
+    {
+        history.Add(value);
+
+        // Keep only last N points for performance
+        if (history.Count > MaxDataPoints)
+        {
+            history.RemoveAt(0);
+        }
+    }
+
+    /// <summary>
+    /// Update charts via SignalR event
+    /// </summary>
+    public async Task UpdateChartsAsync(double speed, double brake, double throttle)
+    {
+        currentSpeed = speed;
+        currentBrake = brake;
+        currentThrottle = throttle;
+
+        UpdateHistory(speedHistory, speed);
+        UpdateHistory(brakeHistory, brake);
+        UpdateHistory(throttleHistory, throttle);
+
+        // Render using Chart.js or similar (simplified version here)
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public async Task AddLapTime(double lapTime)
+    {
+        LapTimes.Add(lapTime);
+
+        if (LapTimes.Count > 20)
+        {
+            LapTimes.RemoveAt(0);
+        }
+
+        averageLapTime = LapTimes.Average();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>
+    /// Get data for charts (simplified - in production, use Chart.js or ScottPlot.Blazor)
+    /// </summary>
+    public List<double> GetSpeedData() => speedHistory.ToList();
+    public List<double> GetBrakeData() => brakeHistory.ToList();
+    public List<double> GetThrottleData() => throttleHistory.ToList();
+}
+
+<style>
+    canvas {
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 200px;
+    }
+</style>
