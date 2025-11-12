@@ -46,6 +46,8 @@ public class DataProcessorService
         {
             rowCount++;
 
+            // Parse record (skip invalid rows)
+            TelemetryRecord? record = null;
             try
             {
                 // Parse common parameters
@@ -71,7 +73,7 @@ public class DataProcessorService
                 var lon = ParseDouble(csv.GetField("VBOX_Long_Min"));
                 var flag = csv.GetField("FLAG_AT_FL") ?? "";
 
-                yield return new TelemetryRecord
+                record = new TelemetryRecord
                 {
                     Timestamp = timestamp,
                     VehicleId = vehicleId,
@@ -90,14 +92,21 @@ public class DataProcessorService
                     Flag = flag,
                     CurrentSector = DetermineSector(lapDist ?? 0)
                 };
-
-                // Progress logging every 10,000 rows
-                if (rowCount % 10000 == 0)
-                    _logger.LogInformation("Processed {Count} telemetry rows...", rowCount);
             }
             catch (Exception ex)
             {
                 _logger.LogWarning("Error parsing row {Row}: {Error}", rowCount, ex.Message);
+                continue; // Skip invalid rows
+            }
+
+            // Yield valid record (outside try-catch to avoid CS1626)
+            if (record != null)
+            {
+                yield return record;
+
+                // Progress logging every 10,000 rows
+                if (rowCount % 10000 == 0)
+                    _logger.LogInformation("Processed {Count} telemetry rows...", rowCount);
             }
         }
 
