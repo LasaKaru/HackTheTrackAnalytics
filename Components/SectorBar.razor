@@ -19,7 +19,7 @@
                             <MudIcon Icon="@icon" Color="@statusColor" Size="Size.Small" Class="mr-2"/>
                             <MudText Typo="Typo.h6">Sector @sector.Number</MudText>
                         </div>
-                        <MudChip Size="Size.Small" Color="@statusColor">
+                        <MudChip T="string" Size="Size.Small" Color="@statusColor">
                             @sector.Status
                         </MudChip>
                     </div>
@@ -28,7 +28,7 @@
                         <MudText Typo="Typo.body1" Style="font-family: monospace; font-weight: 700;">
                             @FormatTime(sector.CurrentTime)
                         </MudText>
-                        <MudText Typo="Typo.body2" Style="color: @GetDeltaColor(sector.Delta);">
+                        <MudText Typo="Typo.body2" Style="@GetDeltaStyle(sector.Delta)">
                             @FormatDelta(sector.Delta)
                         </MudText>
                     </div>
@@ -64,7 +64,7 @@
                 <MudText Typo="Typo.h5" Style="font-family: monospace; color: var(--primary-color);">
                     @FormatTime(totalLapTime)
                 </MudText>
-                <MudText Typo="Typo.body2" Style="color: @GetDeltaColor(totalDelta);">
+                <MudText Typo="Typo.body2" Style="@GetDeltaStyle(totalDelta)">
                     @FormatDelta(totalDelta)
                 </MudText>
             </div>
@@ -211,6 +211,11 @@
         return "var(--danger-color)";      // Red - slower
     }
 
+    private string GetDeltaStyle(TimeSpan delta)
+    {
+        return $"color: {GetDeltaColor(delta)};";
+    }
+
     /// <summary>
     /// Update sector times via SignalR
     /// </summary>
@@ -224,10 +229,11 @@
             sector.Delta = currentTime - bestTime;
 
             // Determine status
-            sector.Status = sector.Delta.TotalSeconds switch
+            var deltaSeconds = sector.Delta.TotalSeconds;
+            sector.Status = deltaSeconds switch
             {
-                < 0 => SectorStatus.Green,
-                < 1.0 => SectorStatus.Yellow,
+                var d when d < 0 => SectorStatus.Green,
+                var d when d < 1.0 => SectorStatus.Yellow,
                 _ => SectorStatus.Red
             };
 

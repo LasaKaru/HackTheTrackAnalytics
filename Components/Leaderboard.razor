@@ -5,7 +5,7 @@
         <MudText Typo="Typo.h6" Style="color: var(--primary-color);">
             <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" /> Live Leaderboard
         </MudText>
-        <MudChip Size="Size.Small" Color="Color.Success">LIVE</MudChip>
+        <MudChip T="string" Size="Size.Small" Color="Color.Success">LIVE</MudChip>
     </div>
 
     @if (drivers.Any())
@@ -19,7 +19,7 @@
             </HeaderContent>
             <RowTemplate>
                 <MudTd DataLabel="Position" Style="text-align: center;">
-                    <MudChip Size="Size.Small" Color="@GetPositionColor(context.Position)" Class="position-chip">
+                    <MudChip T="string" Size="Size.Small" Color="@GetPositionColor(context.Position)" Class="position-chip">
                         @context.Position
                     </MudChip>
                 </MudTd>
@@ -35,7 +35,7 @@
                     </MudText>
                 </MudTd>
                 <MudTd DataLabel="Gap" Style="text-align: right;">
-                    <MudText Typo="Typo.body2" Style="color: @(context.Gap > 0 ? "#ff3366" : "#00ff88");">
+                    <MudText Typo="Typo.body2" Style="@GetGapStyle(context.Gap)">
                         @FormatGap(context.Gap)
                     </MudText>
                 </MudTd>
@@ -140,6 +140,11 @@
             return $"+{gap.TotalMilliseconds:F0}ms";
 
         return $"+{gap.TotalSeconds:F3}s";
+    }
+
+    private string GetGapStyle(TimeSpan gap)
+    {
+        return gap > TimeSpan.Zero ? "color: #ff3366;" : "color: #00ff88;";
     }
 
     /// <summary>
