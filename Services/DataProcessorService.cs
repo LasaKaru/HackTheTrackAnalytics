@@ -1,7 +1,7 @@
 using System.Globalization;
 using CsvHelper;
 using CsvHelper.Configuration;
-using OfficeOpenXml;
+using ClosedXML.Excel;
 using HackTheTrackAnalytics.Models;
 
 namespace HackTheTrackAnalytics.Services;
@@ -17,8 +17,6 @@ public class DataProcessorService
     public DataProcessorService(ILogger<DataProcessorService> logger)
     {
         _logger = logger;
-        // Required for EPPlus
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
     }
 
     /// <summary>
@@ -199,15 +197,16 @@ public class DataProcessorService
 
         await Task.Run(() =>
         {
-            using var package = new ExcelPackage(fileStream);
-            var worksheet = package.Workbook.Worksheets[0];
-            var rowCount = worksheet.Dimension?.Rows ?? 0;
+            using var workbook = new XLWorkbook(fileStream);
+            var worksheet = workbook.Worksheet(1);
+            var rowCount = worksheet.LastRowUsed()?.RowNumber() ?? 0;
+            var colCount = worksheet.LastColumnUsed()?.ColumnNumber() ?? 0;
 
             // Read header row to map columns
             var headers = new Dictionary<string, int>();
-            for (int col = 1; col <= worksheet.Dimension?.Columns; col++)
+            for (int col = 1; col <= colCount; col++)
             {
-                var header = worksheet.Cells[1, col].Text;
+                var header = worksheet.Cell(1, col).GetString();
                 if (!string.IsNullOrEmpty(header))
                     headers[header] = col;
             }
@@ -293,17 +292,17 @@ public class DataProcessorService
         return TimeSpan.Zero;
     }
 
-    private static double GetDoubleValue(ExcelWorksheet ws, int row, Dictionary<string, int> headers, string key)
+    private static double GetDoubleValue(IXLWorksheet ws, int row, Dictionary<string, int> headers, string key)
     {
         if (!headers.TryGetValue(key, out var col)) return 0;
-        var val = ws.Cells[row, col].Text;
+        var val = ws.Cell(row, col).GetString();
         return ParseDouble(val) ?? 0;
     }
 
-    private static int GetIntValue(ExcelWorksheet ws, int row, Dictionary<string, int> headers, string key)
+    private static int GetIntValue(IXLWorksheet ws, int row, Dictionary<string, int> headers, string key)
     {
         if (!headers.TryGetValue(key, out var col)) return 0;
-        var val = ws.Cells[row, col].Text;
+        var val = ws.Cell(row, col).GetString();
         return ParseInt(val) ?? 0;
     }
 }
