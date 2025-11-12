@@ -9,14 +9,7 @@
   <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.104.2" />
     <PackageReference Include="CsvHelper" Version="33.1.0" />
-    <PackageReference Include="itext7" Version="9.3.0" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.0" />
-    <PackageReference Include="MudBlazor" Version="8.14.0" />
-    <PackageReference Include="PDFsharp" Version="6.2.2" />
-    <PackageReference Include="ScottPlot.Blazor" Version="5.1.57" />
-    <PackageReference Include="SkiaSharp" Version="3.119.1" />
-    <PackageReference Include="SkiaSharp.Views.Blazor" Version="3.119.1" />
-    <PackageReference Include="System.IO.Compression" Version="4.3.0" />
   </ItemGroup>
 
   <ItemGroup>

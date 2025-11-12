@@ -1,59 +1,94 @@
 @inherits LayoutComponentBase
 
-<MudThemeProvider Theme="@_theme" IsDarkMode="true"/>
-<MudPopoverProvider/>
-<MudDialogProvider/>
-<MudSnackbarProvider/>
-
-<MudLayout>
-    <MudAppBar Elevation="1" Dense>
-        <MudText Typo="Typo.h6" Style="font-weight: 700;">
-            🏎️ COTA Real-Time Analytics
-        </MudText>
-        <MudSpacer/>
-        <MudText Typo="Typo.body2" Color="Color.Secondary">
-            Circuit of the Americas
-        </MudText>
-    </MudAppBar>
-
-    <MudDrawer Open="true" Elevation="2" Variant="@DrawerVariant.Mini" ClipMode="@DrawerClipMode.Always" Width="240px" MiniWidth="60px">
-        <MudDrawerHeader>
-            <MudText Typo="Typo.h6">Navigation</MudText>
-        </MudDrawerHeader>
-        <NavMenu/>
-    </MudDrawer>
-
-    <MudMainContent>
-        <div style="min-height: 100vh;">
-            @Body
+<div class="page">
+    <header class="app-header">
+        <div class="header-content">
+            <h1>🏎️ COTA Real-Time Analytics</h1>
+            <span class="subtitle">Circuit of the Americas</span>
         </div>
-    </MudMainContent>
-</MudLayout>
+    </header>
 
-@code {
-    private MudTheme _theme = new MudTheme()
-    {
-        PaletteLight = new PaletteLight()
-        {
-            Primary = "#00ff88",
-            Secondary = "#00d4ff",
-            AppbarBackground = "#0a0e27",
-        },
-        PaletteDark = new PaletteDark()
-        {
-            Primary = "#00ff88",
-            Secondary = "#00d4ff",
-            AppbarBackground = "#0a0e27",
-            Background = "#0a0e27",
-            BackgroundGray = "#1a1f3a",
-            Surface = "#141932",
-            DrawerBackground = "#0a0e27",
-            DrawerText = "rgba(255,255,255, 0.7)",
-            ActionDefault = "#ffffff",
-            TextPrimary = "#ffffff",
-            TextSecondary = "rgba(255,255,255, 0.7)",
-            Dark = "#0a0e27",
-            DarkContrastText = "#ffffff"
+    <div class="main-container">
+        <nav class="sidebar">
+            <NavMenu />
+        </nav>
+
+        <main class="content">
+            @Body
+        </main>
+    </div>
+</div>
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    .page {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+        color: #ffffff;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .app-header {
+        background: rgba(10, 14, 39, 0.95);
+        border-bottom: 1px solid rgba(0, 255, 136, 0.3);
+        padding: 1rem 2rem;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        backdrop-filter: blur(10px);
+    }
+
+    .header-content h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #00ff88, #00d4ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .subtitle {
+        font-size: 0.875rem;
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .main-container {
+        display: flex;
+        min-height: calc(100vh - 80px);
+    }
+
+    .sidebar {
+        width: 250px;
+        background: rgba(20, 25, 50, 0.8);
+        border-right: 1px solid rgba(0, 255, 136, 0.2);
+        padding: 1.5rem;
+        position: sticky;
+        top: 80px;
+        height: calc(100vh - 80px);
+        overflow-y: auto;
+    }
+
+    .content {
+        flex: 1;
+        padding: 2rem;
+        overflow-x: hidden;
+    }
+
+    @media (max-width: 768px) {
+        .main-container {
+            flex-direction: column;
         }
-    };
-}
+
+        .sidebar {
+            width: 100%;
+            height: auto;
+            position: relative;
+            top: 0;
+        }
+    }
+</style>

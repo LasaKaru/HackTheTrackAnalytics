@@ -1,16 +1,12 @@
 using HackTheTrackAnalytics.Components;
 using HackTheTrackAnalytics.Services;
 using HackTheTrackAnalytics.Hubs;
-using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
-
-// Add MudBlazor services
-builder.Services.AddMudServices();
 
 // Add SignalR
 builder.Services.AddSignalR(options =>
