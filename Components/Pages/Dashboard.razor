@@ -303,8 +303,8 @@
     {
         return tireWear switch
         {
-            < 50 => Color.Success,
-            < 75 => Color.Warning,
+            var w when w < 50 => Color.Success,
+            var w when w < 75 => Color.Warning,
             _ => Color.Error
         };
     }

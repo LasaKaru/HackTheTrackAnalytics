@@ -41,7 +41,7 @@
             🏁 Live Simulation
         </MudText>
         <MudSpacer/>
-        <MudChip Size="Size.Small" Color="@(isRunning ? Color.Success : Color.Warning)">
+        <MudChip T="string" Size="Size.Small" Color="@(isRunning ? Color.Success : Color.Warning)">
             @(isRunning ? "LIVE" : "PAUSED")
         </MudChip>
     </MudAppBar>

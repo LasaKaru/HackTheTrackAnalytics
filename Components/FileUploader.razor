@@ -23,10 +23,10 @@
         @if (uploadedFiles.Any())
         {
             <MudText Typo="Typo.h6" Class="mt-6 mb-3">Uploaded Files</MudText>
-            <MudList Dense>
+            <MudList T="string" Dense>
                 @foreach (var file in uploadedFiles)
                 {
-                    <MudListItem Icon="@GetFileIcon(file.Name)">
+                    <MudListItem T="string" Icon="@GetFileIcon(file.Name)">
                         <div class="d-flex justify-space-between align-center">
                             <div>
                                 <MudText>@file.Name</MudText>
